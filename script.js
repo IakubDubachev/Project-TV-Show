@@ -1,6 +1,7 @@
 function setup() {
   const allEpisodes = getAllEpisodes();
   makePageForEpisodes(allEpisodes);
+  liveSearch(allEpisodes);
 }
 
 // Function to render all episodes on the page
@@ -23,7 +24,10 @@ function makePageForEpisodes(episodeList) {
 
     // Episode Title with Episode Code
     const episodeTitle = document.createElement('h3');
-    episodeTitle.textContent = `${formatEpisodeCode(episode.season, episode.number)} - ${episode.name}`;
+    episodeTitle.textContent = `${episode.name} - ${formatEpisodeCode(
+      episode.season,
+      episode.number
+    )} `;
 
     // Episode Image
     const episodeImage = document.createElement('img');
@@ -49,11 +53,50 @@ function makePageForEpisodes(episodeList) {
     // Add episode card to container
     episodeContainer.appendChild(episodeCard);
   });
+  updateCount(episodeList.length);
 }
 
 // Format the episode code (e.g., S02E07)
 function formatEpisodeCode(season, number) {
   return `S${String(season).padStart(2, '0')}E${String(number).padStart(2, '0')}`;
+}
+
+function liveSearch(allEpisodes) {
+  const searchIcon = document.querySelector(".search-icon");
+  const searchContainer = document.querySelector(".containr-fluid");
+  const searchBar = document.getElementById("search-bar");
+
+  // Toggle the visibility of the search bar
+  searchIcon.addEventListener("click", () => {
+    searchContainer.classList.toggle("active");
+    if (searchContainer.classList.contains("active")) {
+      searchBar.focus(); // Automatically focus on the search bar
+    }
+  });
+
+  searchBar.addEventListener("input", (event) => {
+    const searchTerm = event.target.value.toLowerCase().trim();
+
+    const filteredEpisodes = allEpisodes.filter((episode) => {
+      const episodeName = episode.name.toLowerCase();
+      const episodeSummary = episode.summary.toLowerCase();
+
+      return (
+        episodeName.includes(searchTerm) || episodeSummary.includes(searchTerm)
+      );
+    });
+
+    if (searchTerm === "") {
+      makePageForEpisodes(allEpisodes);
+    } else {
+      makePageForEpisodes(filteredEpisodes);
+    }
+  });
+}
+
+function updateCount(count) {
+  const result = document.getElementById("search-result");
+  result.textContent = `${count} episode(s).`;
 }
 
 // Run the setup when the page loads
