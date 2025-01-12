@@ -2,6 +2,7 @@ function setup() {
   const allEpisodes = getAllEpisodes();
   makePageForEpisodes(allEpisodes);
   liveSearch(allEpisodes);
+  episodeSelector(allEpisodes);
 }
 
 // Function to render all episodes on the page
@@ -65,6 +66,8 @@ function liveSearch(allEpisodes) {
   const searchIcon = document.querySelector(".search-icon");
   const searchContainer = document.querySelector(".containr-fluid");
   const searchBar = document.getElementById("search-bar");
+  const selector = document.getElementById("episodes-selector");
+
 
   // Toggle the visibility of the search bar
   searchIcon.addEventListener("click", () => {
@@ -88,8 +91,10 @@ function liveSearch(allEpisodes) {
 
     if (searchTerm === "") {
       makePageForEpisodes(allEpisodes);
+      updateEpisodeSelector(allEpisodes);
     } else {
       makePageForEpisodes(filteredEpisodes);
+      updateEpisodeSelector(filteredEpisodes);
     }
   });
 }
@@ -97,6 +102,40 @@ function liveSearch(allEpisodes) {
 function updateCount(count) {
   const result = document.getElementById("search-result");
   result.textContent = `${count} episode(s).`;
+}
+
+function updateEpisodeSelector(episodeList) {
+  const selector = document.getElementById("episodes-selector");
+  selector.innerHTML = '<option value="">All Episodes</option>'; // Reset selector
+
+  episodeList.forEach((episode) => {
+    const option = document.createElement("option");
+    option.value = episode.id;
+    option.textContent = `${formatEpisodeCode(
+      episode.season,
+      episode.number
+    )} - ${episode.name}`;
+    selector.appendChild(option);
+  });
+}
+
+function episodeSelector (allEpisodes) {
+  const selector = document.getElementById("episodes-selector");
+
+  selector.addEventListener("change", (event) => {
+    const selectedEpisodeId = event.target.value;
+    
+    if (selectedEpisodeId === "") {
+      // Show all episodes if "All Episodes" is selected
+      makePageForEpisodes(allEpisodes);
+    } else {
+      // Show only the selected episode
+      const selectedEpisode = allEpisodes.find(
+        (episode) => episode.id.toString() === selectedEpisodeId
+      );
+      makePageForEpisodes([selectedEpisode]);
+    }
+  });
 }
 
 // Run the setup when the page loads
