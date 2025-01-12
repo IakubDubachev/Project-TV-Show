@@ -82,6 +82,28 @@ header.main-header .tv-show {
   color: #555;
 }
 
+#episodes-selector {
+  width: 300px;
+  padding: 10px 15px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #fff;
+  color: #333;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  outline: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+#episodes-selector option {
+  padding: 10px;
+  font-size: 1rem;
+  color: #333;
+  background-color: #fff;
+}
+
 .episode-card {
   border: 1px solid #ccc;
   border-radius: 5px;
