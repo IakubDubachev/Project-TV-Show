@@ -82,7 +82,7 @@ header.main-header .tv-show {
   color: #555;
 }
 
-#episodes-selector {
+#episodes-selector, #show-selector{
   width: 300px;
   padding: 10px 15px;
   font-size: 1rem;
