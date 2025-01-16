@@ -1,9 +1,11 @@
+let cachedEpisodes = null; // Cache to avoid multiple fetches
+
 async function setup() {
   const rootElem = document.getElementById("root");
   rootElem.textContent = "Loading shows, please wait...";
 
   try {
-    // Fetch and cache shows
+    // Fetch and cache all shows
     const allShows = await fetchShows();
     const sortedShows = sortShowsAlphabetically(allShows);
 
@@ -13,20 +15,21 @@ async function setup() {
     // Load episodes for the first show by default
     const firstShowId = sortedShows[0].id;
     const allEpisodes = await fetchEpisodes(firstShowId);
+    cachedEpisodes = allEpisodes;
 
-    // Render the page and setup controls
+    // Render episodes and setup functionality
     makePageForEpisodes(allEpisodes);
     liveSearch(allEpisodes);
     updateEpisodeSelector(allEpisodes);
 
-    // Add event listeners for the show selector
-    showSelector(sortedShows);
+    // Add event listener for the show selector dropdown
+    setupShowSelector(sortedShows);
   } catch (error) {
     showError(`Failed to load data: ${error.message}`);
   }
 }
 
-// Fetch the list of shows from the TVMaze API
+// Fetch the list of shows
 async function fetchShows() {
   const response = await fetch("https://api.tvmaze.com/shows");
   if (!response.ok) {
@@ -35,22 +38,20 @@ async function fetchShows() {
   const data = await response.json();
   return data;
 }
-// alphabetical order: .sort(function(a, b){return a-b});
 
+// Fetch the episodes of a specific show
 async function fetchEpisodes(showId) {
   const response = await fetch(
     `https://api.tvmaze.com/shows/${showId}/episodes`
   );
-
   if (!response.ok) {
     throw new Error(`Failed to fetch episodes: ${response.status}`);
   }
-
   const data = await response.json();
   return data;
 }
 
-// Render all episodes on the page
+// Render episodes on the page
 function makePageForEpisodes(episodeList) {
   const rootElem = document.getElementById("root");
   rootElem.innerHTML = ""; // Clear any existing content
@@ -96,9 +97,12 @@ function makePageForEpisodes(episodeList) {
   updateCount(episodeList.length);
 }
 
-// Format the episode code (e.g., S01E02)
+// Format episode code (e.g., S01E02)
 function formatEpisodeCode(season, number) {
-  return `S${String(season).padStart(2, "0")}E${String(number).padStart(2, "0")}`;
+  return `S${String(season).padStart(2, "0")}E${String(number).padStart(
+    2,
+    "0"
+  )}`;
 }
 
 // Update the episode count
@@ -113,14 +117,12 @@ function liveSearch(allEpisodes) {
   const searchContainer = document.querySelector(".containr-fluid");
   const searchBar = document.getElementById("search-bar");
 
-  // Toggle the visibility of the search bar
   searchIcon.addEventListener("click", () => {
     searchContainer.classList.toggle("active");
     if (searchContainer.classList.contains("active")) {
       searchBar.focus(); // Automatically focus on the search bar
     }
   });
-
   searchBar.addEventListener("input", (event) => {
     const searchTerm = event.target.value.toLowerCase().trim();
 
@@ -159,6 +161,7 @@ function updateEpisodeSelector(allEpisodes) {
   });
 }
 
+// Handle episode selection from the dropdown
 function episodeSelector(allEpisodes) {
   const selector = document.getElementById("episodes-selector");
 
@@ -176,7 +179,8 @@ function episodeSelector(allEpisodes) {
   });
 }
 
-function setupShowSelector(showList) {
+// Setup the show selector dropdown
+function setupShowSelector(sortedShows) {
   const showSelector = document.getElementById("show-selector");
 
   showSelector.addEventListener("change", async (event) => {
@@ -185,12 +189,15 @@ function setupShowSelector(showList) {
     if (!selectedShowId) return;
 
     const episodes = await fetchEpisodes(selectedShowId);
-    makePageForEpisodes(episodes);
+    cachedEpisodes = episodes;
 
-    setupSearchAndSelector(episodes);
+    makePageForEpisodes(episodes);
+    liveSearch(episodes);
+    updateEpisodeSelector(episodes);
   });
 }
 
+// Populate the show selector dropdown
 function showsDropdown(showsList) {
   const showSelector = document.getElementById("show-selector");
   showSelector.innerHTML = '<option value="">Select a Show...</option>';
@@ -203,10 +210,18 @@ function showsDropdown(showsList) {
   });
 }
 
+// Sort shows alphabetically
 function sortShowsAlphabetically(shows) {
   return shows.sort((a, b) =>
     a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
   );
 }
+
+// Show error message
+function showError(message) {
+  const rootElem = document.getElementById("root");
+  rootElem.innerHTML = `<p class="error">${message}</p>`;
+}
+
 // Initialize the app when the page loads
 window.onload = setup;
