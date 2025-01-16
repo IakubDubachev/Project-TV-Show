@@ -113,15 +113,21 @@ function updateCount(count) {
 
 // Live search functionality
 function liveSearch(allEpisodes) {
+  const searchIcon = document.querySelector(".search-icon");
+  const searchContainer = document.querySelector(".containr-fluid");
   const searchBar = document.getElementById("search-bar");
-  if (!searchBar) {
-    console.error("Search bar element not found!");
-    return;
-  }
+  const episodeSelector = document.getElementById("episodes-selector");
+
+  // Toggle the visibility of the search bar
+  searchIcon.addEventListener("click", () => {
+    searchContainer.classList.toggle("active");
+    if (searchContainer.classList.contains("active")) {
+      searchBar.focus(); // Automatically focus on the search bar
+    }
+  });
 
   searchBar.addEventListener("input", (event) => {
     const searchTerm = event.target.value.toLowerCase().trim();
-    console.log("Search term entered:", searchTerm); // Debug log
 
     const filteredEpisodes = allEpisodes.filter((episode) => {
       const episodeName = episode.name.toLowerCase();
@@ -132,18 +138,18 @@ function liveSearch(allEpisodes) {
       );
     });
 
-    console.log("Filtered episodes:", filteredEpisodes); // Debug log
-
     if (searchTerm === "") {
       makePageForEpisodes(allEpisodes);
+      updateEpisodeSelector(allEpisodes);
     } else {
       makePageForEpisodes(filteredEpisodes);
+      updateEpisodeSelector(filteredEpisodes);
     }
   });
 }
 
 // Populate and handle the episode selector dropdown
-function episodeSelector(allEpisodes) {
+function updateEpisodeSelector(allEpisodes) {
   const selector = document.getElementById("episodes-selector");
   if (!selector) {
     console.error("Episode selector element not found!");
@@ -160,6 +166,10 @@ function episodeSelector(allEpisodes) {
     )} - ${episode.name}`;
     selector.appendChild(option);
   });
+}
+
+function episodeSelector(allEpisodes) {
+  const selector = document.getElementById("episodes-selector");
 
   selector.addEventListener("change", (event) => {
     const selectedEpisodeId = event.target.value;
