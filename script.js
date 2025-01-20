@@ -2,9 +2,15 @@
 let cachedShows = null;
 let cachedEpisodes = {}; // Cache for episodes by show ID
 
+// Backup for the root element's original content
+let originalRootContent = null;
+
 async function setup() {
   const rootElem = document.getElementById("root");
   rootElem.textContent = "Loading shows, please wait...";
+
+  // Backup the original root content for restoration
+  originalRootContent = rootElem.innerHTML;
 
   try {
     // Fetch and cache all shows
@@ -68,7 +74,8 @@ function makePageForShows(showList) {
       const episodes = await fetchEpisodes(show.id);
       makePageForEpisodes(episodes);
       populateEpisodeDropdown(episodes);
-      hideShowsView(); // Hide shows when viewing episodes
+      setupEpisodeSelector(); // Add event listener for episode dropdown
+      addBackToShowsButton(); // Add back button
     });
 
     showsContainer.appendChild(showCard);
@@ -87,6 +94,7 @@ function makePageForEpisodes(episodeList) {
   episodeList.forEach((episode) => {
     const episodeCard = document.createElement("div");
     episodeCard.className = "episode-card";
+    episodeCard.setAttribute("data-episode-id", episode.id); // Add data attribute
 
     episodeCard.innerHTML = `
       <h3>${formatEpisodeCode(episode.season, episode.number)} - ${
@@ -104,6 +112,35 @@ function makePageForEpisodes(episodeList) {
 
   rootElem.appendChild(episodeContainer);
   updateCount(episodeList.length);
+}
+
+// Add "Back to Shows" button
+function addBackToShowsButton() {
+  const rootElem = document.getElementById("root");
+
+  // Create the button
+  const backButton = document.createElement("button");
+  backButton.textContent = "Back to Shows";
+  backButton.className = "back-button";
+  backButton.style.display = "block";
+  backButton.style.margin = "10px auto";
+
+  // Add click event to restore the original shows view
+  backButton.addEventListener("click", restoreShowsView);
+
+  // Add the button to the root
+  rootElem.prepend(backButton);
+}
+
+// Restore shows view
+function restoreShowsView() {
+  const rootElem = document.getElementById("root");
+
+  // Restore original root content
+  if (originalRootContent) {
+    rootElem.innerHTML = "";
+    makePageForShows(sortShowsAlphabetically(cachedShows)); // Rebuild the shows
+  }
 }
 
 // Update count of displayed episodes
@@ -156,13 +193,37 @@ function setupShowSelector() {
     const episodes = await fetchEpisodes(showId);
     makePageForEpisodes(episodes);
     populateEpisodeDropdown(episodes);
-    hideShowsView();
+    setupEpisodeSelector(); // Add event listener for episode dropdown
+    addBackToShowsButton(); // Add back button
   });
 }
 
-// Hide shows view
-function hideShowsView() {
-  document.querySelector(".shows-container").style.display = "none";
+// Setup event listener for episode selector
+function setupEpisodeSelector() {
+  const episodeSelector = document.getElementById("episodes-selector");
+  episodeSelector.addEventListener("change", (event) => {
+    const episodeId = event.target.value;
+
+    // Fetch all episodes from the currently displayed ones
+    const episodeContainer = document.getElementById("episode-container");
+    const allEpisodes = Array.from(episodeContainer.children).map((card) => ({
+      id: card.getAttribute("data-episode-id"),
+      html: card.outerHTML,
+    }));
+
+    // Filter for the selected episode or show all episodes if "All Episodes" is selected
+    if (episodeId) {
+      const filteredEpisode = allEpisodes.find((ep) => ep.id === episodeId);
+      if (filteredEpisode) {
+        episodeContainer.innerHTML = filteredEpisode.html;
+      }
+    } else {
+      episodeContainer.innerHTML = allEpisodes.map((ep) => ep.html).join("");
+    }
+
+    // Update count
+    updateCount(episodeId ? 1 : allEpisodes.length);
+  });
 }
 
 // Live search functionality
